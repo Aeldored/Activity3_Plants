@@ -21,6 +21,7 @@ function loadPlantsData() {
         .then(data => {
             plantsData = data;
             populateZoneDropdown();
+            populateLightDropdown();
             displayPlantsTable();
         })
         .catch(error => {
@@ -59,30 +60,54 @@ function parseXMLData(xmlDoc) {
         plantsData.push(plantData);
     }
     
-    // Populate Zone dropdown from XML data
+    // Populate dropdowns from XML data
     populateZoneDropdown();
+    populateLightDropdown();
     displayPlantsTable();
 }
 
 function populateZoneDropdown() {
     const zoneSelect = document.getElementById('zone');
-    const zones = plantsData.map(plant => plant.zone);
-    
-    // Get unique zones only
-    const uniqueZones = [...new Set(zones)].sort();
     
     // Keep the default "Choose zone..." option
     zoneSelect.innerHTML = '<option value="">Choose zone...</option>';
     
-    // Add only unique zones from XML data
-    uniqueZones.forEach(zone => {
+    // Add zones 1-11 and Annual
+    const zones = [];
+    for (let i = 1; i <= 11; i++) {
+        zones.push(i.toString());
+    }
+    zones.push('Annual');
+    
+    zones.forEach(zone => {
         const option = document.createElement('option');
         option.value = zone;
         option.textContent = zone;
         zoneSelect.appendChild(option);
     });
     
-    console.log(`Zone dropdown populated with ${uniqueZones.length} unique options from XML data`);
+    console.log(`Zone dropdown populated with zones 1-11 and Annual`);
+}
+
+function populateLightDropdown() {
+    const lightSelect = document.getElementById('light');
+    const lightValues = plantsData.map(plant => plant.light);
+    
+    // Get unique light values only
+    const uniqueLights = [...new Set(lightValues)].sort();
+    
+    // Keep the default "Choose light..." option
+    lightSelect.innerHTML = '<option value="">Choose light...</option>';
+    
+    // Add only unique light values from XML data
+    uniqueLights.forEach(light => {
+        const option = document.createElement('option');
+        option.value = light;
+        option.textContent = light;
+        lightSelect.appendChild(option);
+    });
+    
+    console.log(`Light dropdown populated with ${uniqueLights.length} unique options from XML data`);
 }
 
 function addZoneToDropdown(zoneValue) {
@@ -149,21 +174,23 @@ function selectPlant(index) {
     if (plant) {
         console.log('Selected plant data:', plant); // Debug log
         
+        // Set text fields first
         document.getElementById("common").value = plant.common || '';
         document.getElementById("botanical").value = plant.botanical || '';
-        
-        // Handle zone field - set exact value from data
-        document.getElementById("zone").value = plant.zone || '';
-        
-        // Handle light field - try to match existing options or add new one  
-        setSelectValue("light", plant.light);
+        document.getElementById("availability").value = plant.availability || '';
         
         // Handle price - remove $ symbol if present
         const priceValue = (plant.price || '').replace('$', '');
         document.getElementById("price").value = priceValue;
         
-        // Handle availability as text input
-        document.getElementById("availability").value = plant.availability || '';
+        // Set dropdowns with a small delay to prevent interference
+        setTimeout(() => {
+            // Handle zone field - set exact value from data
+            document.getElementById("zone").value = plant.zone || '';
+            
+            // Handle light field - try to match existing options or add new one  
+            setSelectValue("light", plant.light);
+        }, 10);
         
         // Add visual feedback
         showNotification('Plant selected for editing', 'info');
@@ -180,9 +207,6 @@ function addPlant() {
     };
     
     plantsData.push(newPlant);
-    
-    // Add new zone to dropdown if it doesn't exist
-    addZoneToDropdown(formData.zone);
     
     savePlantsData();
     displayPlantsTable();
@@ -227,12 +251,15 @@ function deletePlant() {
 }
 
 function getFormData() {
+    const priceValue = document.getElementById("price").value.trim();
+    const formattedPrice = priceValue && !priceValue.startsWith('$') ? `$${priceValue}` : priceValue;
+    
     return {
         common: document.getElementById("common").value.trim(),
         botanical: document.getElementById("botanical").value.trim(),
         zone: document.getElementById("zone").value.trim(),
         light: document.getElementById("light").value.trim(),
-        price: document.getElementById("price").value.trim(),
+        price: formattedPrice,
         availability: document.getElementById("availability").value.trim()
     };
 }
@@ -251,42 +278,11 @@ function setSelectValue(elementId, value) {
         }
     }
     
-    // If no exact match, try partial matching for light field
-    if (!optionFound && elementId === 'light') {
-        const lightValue = trimmedValue.toLowerCase();
-        
-        // Map XML light values to form options
-        if (lightValue.includes('sun or shade') || lightValue.includes('sun and shade')) {
-            select.value = 'Partial Sun';
-            optionFound = true;
-        } else if (lightValue.includes('mostly sunny') || lightValue === 'sunny') {
-            select.value = 'Full Sun';
-            optionFound = true;
-        } else if (lightValue.includes('mostly shady') || lightValue.includes('mostly shade')) {
-            select.value = 'Partial Shade';
-            optionFound = true;
-        } else if (lightValue === 'shade' || lightValue.includes('full shade')) {
-            select.value = 'Full Shade';
-            optionFound = true;
-        } else if (lightValue === 'sun' || lightValue.includes('full sun')) {
-            select.value = 'Full Sun';
-            optionFound = true;
-        }
-    }
-    
-    
-    // If still no match found, add a temporary option
+    // If no exact match found, the value should exist in dropdown since we populate from data
     if (!optionFound && trimmedValue) {
-        const newOption = document.createElement('option');
-        newOption.value = trimmedValue;
-        newOption.textContent = `${trimmedValue} (from data)`;
-        newOption.style.fontStyle = 'italic';
-        newOption.style.color = '#666';
-        select.appendChild(newOption);
+        console.warn(`Value '${trimmedValue}' not found in ${elementId} dropdown options`);
+        // Try to set the value anyway in case it gets added later
         select.value = trimmedValue;
-        
-        // Add a note that this is custom data
-        console.log(`Added custom ${elementId} option: ${trimmedValue}`);
     }
 }
 
@@ -409,7 +405,8 @@ function validateForm(data, isUpdate = false) {
     }
     
     // Validate price is a positive number
-    const price = parseFloat(data.price);
+    const priceValue = data.price.replace('$', '');
+    const price = parseFloat(priceValue);
     if (isNaN(price) || price < 0) {
         showNotification('Please enter a valid price (positive number).', 'error');
         document.getElementById('price').focus();
