@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Catalog</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        :root {
+            /* Consistent color palette */
+            --primary-green: #667c5c;
+            --secondary-green: #85a378;
+            --tertiary-green: #a8c69b;
+            --light-green: #c7e0be;
+            --lightest-green: #e8f4e5;
+            --dark-green: #2d4a2b;
+            --accent-green: #4caf50;
+            
+            /* Consistent spacing scale */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 0.75rem;
+            --spacing-lg: 1rem;
+            --spacing-xl: 1.25rem;
+            --spacing-xxl: 1.5rem;
+            
+            /* Typography scale */
+            --font-xs: 0.75rem;
+            --font-sm: 0.85rem;
+            --font-md: 0.95rem;
+            --font-lg: 1.1rem;
+            --font-xl: 1.35rem;
+            
+            /* Border radius scale */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            
+            /* Shadow scale */
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+            
+            /* Transition timing */
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 25%, var(--tertiary-green) 50%, var(--light-green) 75%, var(--lightest-green) 100%);
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            position: relative;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container-fluid {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            padding: 1rem;
+            max-height: 100vh;
+        }
+
+        .row {
+            height: calc(100vh - 2rem);
+            margin: 0;
+        }
+
+        .col-md-8, .col-md-4 {
+            padding: 0 0.5rem;
+            height: 100%;
+        }
+
+        /* Main Containers */
+        .table-container, .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.08),
+                0 1px 3px rgba(0, 0, 0, 0.1);
+            height: calc(100vh - 2rem);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Table Styles */
+        .table-container {
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+        }
+
+        .table-container h2 {
+            color: #2d4a2b;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0 0 1.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table-responsive {
+            flex: 1;
+            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(102, 124, 92, 0.1);
+        }
+
+        .table {
+            margin: 0;
+            background: white;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, #85a378, #a8c69b);
+            color: #2d4a2b;
+            font-weight: 600;
+            border: none;
+            padding: 1rem 0.75rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table tbody td {
+            padding: 0.875rem 0.75rem;
+            border-color: rgba(102, 124, 92, 0.1);
+            vertical-align: middle;
+        }
+
+        .table tbody tr {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(168, 198, 155, 0.1);
+            transform: translateX(2px);
+        }
+
+        .selected-row {
+            background-color: rgba(168, 198, 155, 0.2) !important;
+            border-left: 3px solid #85a378;
+        }
+
+        /* Form Styles */
+        .form-container {
+            padding: 1.25rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-container h4 {
+            color: #2d4a2b;
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin: 0 0 0.75rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        #plantForm {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 0.25rem;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .form-fields-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .form-label {
+            color: #2d4a2b;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            border: 2px solid rgba(102, 124, 92, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus {
+            border-color: #85a378;
+            box-shadow: 0 0 0 0.2rem rgba(133, 163, 120, 0.25);
+            background: white;
+            outline: none;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2385a378' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+            border: 2px solid rgba(102, 124, 92, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem 2.25rem 0.75rem 1rem;
+            transition: all 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+        }
+        
+        .form-select:focus {
+            border-color: #85a378;
+            box-shadow: 0 0 0 0.2rem rgba(133, 163, 120, 0.25);
+            background-color: white;
+            outline: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%232E7D32' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+        }
+
+        /* Secondary button for floating controls only */
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #868e96);
+            color: white;
+            box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #5a6268, #6c757d);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+        }
+
+        /* Scrollbar Styles */
+        .table-responsive::-webkit-scrollbar,
+        .form-fields-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track,
+        .form-fields-container::-webkit-scrollbar-track {
+            background: rgba(102, 124, 92, 0.1);
+            border-radius: 3px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb,
+        .form-fields-container::-webkit-scrollbar-thumb {
+            background: rgba(133, 163, 120, 0.6);
+            border-radius: 3px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover,
+        .form-fields-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(133, 163, 120, 0.8);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 0.5rem;
+            }
+            
+            .table-container, .form-container {
+                padding: 1rem;
+            }
+            
+            .col-md-8, .col-md-4 {
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Consistent spacing system */
+        .mb-3 {
+            margin-bottom: 0.75rem !important;
+        }
+
+        /* Container consistency */
+        .form-container {
+            padding: 1.25rem;
+        }
+
+        .table-container {
+            padding: 1.25rem;
+        }
+
+        /* Action buttons container */
+        .action-buttons-container {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(102, 124, 92, 0.1);
+            flex-shrink: 0;
+        }
+
+        /* Enhanced form elements with better readability */
+        .form-control, .form-select {
+            padding: 0.65rem 0.85rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border: 2px solid rgba(102, 124, 92, 0.2);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.95);
+            width: 100%;
+            line-height: 1.4;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #85a378;
+            box-shadow: 0 0 0 0.2rem rgba(133, 163, 120, 0.25);
+            background: white;
+            outline: none;
+        }
+
+        .form-label {
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #2d4a2b;
+            display: block;
+            text-align: left;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        /* Form field groups for better alignment */
+        .form-fields-container .mb-3 {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .form-group {
+            background: rgba(248, 255, 248, 0.4);
+            border-radius: 12px;
+            padding: 1.1rem;
+            border: 1px solid rgba(102, 124, 92, 0.15);
+            margin-bottom: 1rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0 !important;
+        }
+
+        /* Enhanced two-column layout */
+        .form-group .row.g-3 {
+            --bs-gutter-x: 1rem;
+            margin: 0;
+            align-items: end;
+        }
+
+        .form-group .col-6 {
+            padding-left: calc(var(--bs-gutter-x) * 0.5);
+            padding-right: calc(var(--bs-gutter-x) * 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Improved single field containers */
+        .form-group .mb-3 {
+            margin-bottom: 0.75rem !important;
+        }
+
+        .form-group .mb-3:last-child {
+            margin-bottom: 0 !important;
+        }
+
+        /* Enhanced form fields container */
+        .form-fields-container {
+            padding: 0.25rem;
+        }
+
+        /* Input placeholder styling */
+        .form-control::placeholder,
+        .form-select option:first-child {
+            color: rgba(45, 74, 43, 0.6);
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        /* Better field spacing in groups */
+        .form-group .mb-3 .form-control,
+        .form-group .mb-3 .form-select {
+            margin-top: auto;
+        }
+
+        /* Responsive form adjustments */
+        @media (max-width: 576px) {
+            .form-group .col-6 {
+                flex: 0 0 100%;
+                max-width: 100%;
+                margin-bottom: 0.75rem;
+            }
+            
+            .form-group .col-6:last-child {
+                margin-bottom: 0;
+            }
+
+            .form-control, .form-select {
+                font-size: 1rem;
+                padding: 0.75rem 0.9rem;
+            }
+
+            .form-label {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Improved visual hierarchy */
+        .form-group {
+            position: relative;
+        }
+
+        .form-group::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(180deg, #85a378, #a8c69b);
+            border-radius: 0 12px 12px 0;
+            opacity: 0.7;
+        }
+
+        /* Consistent button styling */
+        .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.825rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4caf50, #66bb6a);
+            color: white;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #43a047, #5cb860);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2196f3, #42a5f5);
+            color: white;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1e88e5, #39a0ed);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336, #ef5350);
+            color: white;
+            box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #e53935, #e57373);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        }
+
+        .btn-success.mb-3 {
+            width: 100%;
+            margin-bottom: 0.75rem !important;
+        }
+
+        /* Compact action buttons */
+        .action-buttons-container .row {
+            margin-bottom: 0;
+        }
+
+        .action-buttons-container .row.g-2 {
+            --bs-gutter-y: 0.25rem;
+            --bs-gutter-x: 0.5rem;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        .action-buttons-container .row.g-2 .col-6 {
+            padding-top: 0.125rem;
+            padding-bottom: 0.125rem;
+            height: auto !important;
+        }
+
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 300px;
+        }
+
+        .notification-success {
+            background: linear-gradient(135deg, #4caf50, #66bb6a);
+        }
+
+        .notification-error {
+            background: linear-gradient(135deg, #f44336, #ef5350);
+        }
+
+        .notification-info {
+            background: linear-gradient(135deg, #2196f3, #42a5f5);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Enhanced form field focus states */
+        .form-control:invalid:not(:placeholder-shown) {
+            border-color: #f44336;
+            box-shadow: 0 0 0 0.2rem rgba(244, 67, 54, 0.25);
+        }
+
+        .form-control:valid:not(:placeholder-shown) {
+            border-color: #4caf50;
+        }
+
+        /* Loading state for buttons */
+        .btn:disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Enhanced table row selection */
+        .table tbody tr.selected-row {
+            background-color: rgba(168, 198, 155, 0.2) !important;
+            border-left: 3px solid #85a378;
+            box-shadow: inset 0 0 0 1px rgba(133, 163, 120, 0.3);
+        }
+
+        /* Search functionality styles */
+        .search-container {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .search-input {
+            padding-left: 2.5rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #85a378;
+            font-size: 1.1rem;
+        }
+
+        /* Floating controls */
+        .floating-controls, .floating-clear-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10;
+        }
+
+        .floating-controls .btn-outline-secondary,
+        .floating-clear-btn .btn-outline-secondary {
+            border-color: rgba(102, 124, 92, 0.3);
+            color: #667c5c;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .floating-controls .btn-outline-secondary:hover,
+        .floating-clear-btn .btn-outline-secondary:hover {
+            background-color: rgba(102, 124, 92, 0.1);
+            border-color: #85a378;
+            color: #2d4a2b;
+            transform: scale(1.05);
+        }
+
+        /* Tooltip for floating buttons */
+        .floating-controls .btn-outline-secondary::after,
+        .floating-clear-btn .btn-outline-secondary::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -35px;
+            right: 0;
+            background: rgba(45, 74, 43, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-controls .btn-outline-secondary:hover::after,
+        .floating-clear-btn .btn-outline-secondary:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="table-container">
+                    <h2>🌿 Plant Catalog</h2>
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="form-control search-input" id="searchInput" placeholder="Search plants by name, zone, or light requirements...">
+                    </div>
+                    <div class="floating-controls">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="manualRemoveDuplicates()" title="Clean up duplicate entries in the catalog">
+                            🧹
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover plant-table" id="plantTable">
+                            <thead>
+                                <tr>
+                                    <th>Common Name</th>
+                                    <th>Botanical Name</th>
+                                    <th>Zone</th>
+                                    <th>Light</th>
+                                    <th>Price</th>
+                                    <th>Availability</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="form-container">
+                    <div class="floating-clear-btn">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearForm()" title="Clear all form fields">
+                            🧹
+                        </button>
+                    </div>
+                    <h4>🌱 Plant Details</h4>
+                    
+                    <form id="plantForm">
+                        <div class="form-fields-container">
+                            <!-- Plant Identification Group -->
+                            <div class="form-group mb-4">
+                                <div class="mb-3">
+                                    <label for="common" class="form-label">Common Name</label>
+                                    <input type="text" class="form-control" id="common" placeholder="e.g., Rose" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="botanical" class="form-label">Botanical Name</label>
+                                    <input type="text" class="form-control" id="botanical" placeholder="e.g., Rosa rubiginosa" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Growing Conditions Group -->
+                            <div class="form-group mb-4">
+                                <div class="row g-3" style="height: auto;">
+                                    <div class="col-6">
+                                        <label for="zone" class="form-label">Zone</label>
+                                        <select class="form-select" id="zone" required>
+                                            <option value="">Choose zone...</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-6">
+                                        <label for="light" class="form-label">Light</label>
+                                        <select class="form-select" id="light" required>
+                                            <option value="">Choose light...</option>
+                                            <option value="Full Sun">Full Sun</option>
+                                            <option value="Partial Sun">Partial Sun</option>
+                                            <option value="Partial Shade">Partial Shade</option>
+                                            <option value="Full Shade">Full Shade</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Commercial Info Group -->
+                            <div class="form-group mb-3">
+                                <div class="row g-3" style="height: auto;">
+                                    <div class="col-6">
+                                        <label for="price" class="form-label">Price ($)</label>
+                                        <input type="number" class="form-control" id="price" placeholder="0.00" step="0.01" min="0" required>
+                                    </div>
+                                    
+                                    <div class="col-6">
+                                        <label for="availability" class="form-label">Availability</label>
+                                        <input type="text" class="form-control" id="availability" placeholder="e.g., In Stock" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons-container">
+                            <button type="button" class="btn btn-success mb-3" onclick="addPlant()">Add Plant</button>
+                            <div class="row g-2" style="height: auto;">
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-primary w-100" onclick="updatePlant()">Update</button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-danger w-100" onclick="deletePlant()">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
